@@ -1,0 +1,141 @@
+# OpenTelemetry Collector Configuration for JARVIS V2 with Datadog
+# Configuração de Observabilidade com Datadog Integration
+
+receivers:
+  # OTLP Receiver - Recebe telemetria das aplicações
+  otlp:
+    protocols:
+      http:
+        endpoint: "localhost:4318"
+      grpc:
+        endpoint: "localhost:4317"
+  
+  # Host Metrics - Métricas do sistema
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      # Utilização de paginação
+      paging:
+        metrics:
+          system.paging.utilization:
+            enabled: true
+      
+      # Utilização de CPU
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      
+      # Utilização de disco
+      disk:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      
+      # Load average
+      load:
+      
+      # Utilização de memória
+      memory:
+      
+      # Métricas de rede
+      network:
+      
+      # Processos em execução
+      processes:
+
+  # Prometheus Receiver - Para métricas do FastAPI
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'jarvis-backend'
+          static_configs:
+            - targets: ['localhost:8001']
+          metrics_path: '/metrics'
+          scrape_interval: 15s
+
+exporters:
+  # Datadog Exporter - Envia dados para Datadog
+  datadog/exporter:
+    api:
+      site: "ddog-gov.com"
+      key: "401c3160ae0a60569c3070239ee296c4"
+    
+    # Configurações adicionais do Datadog
+    hostname: "jarvis-v2-host"
+    service: "jarvis-v2"
+    version: "2.0.0"
+    env: "development"
+    
+    # Tags customizadas
+    tags:
+      - "project:jarvis-v2"
+      - "component:ai-assistant"
+      - "team:development"
+  
+  # Console exporter - Para debug local
+  logging:
+    loglevel: debug
+  
+  # Prometheus exporter - Métricas locais
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "jarvis"
+  
+  # File exporter - Backup local
+  file:
+    path: "./telemetry-data.json"
+
+connectors:
+  # Datadog Connector - Processa dados antes do envio
+  datadog/connector:
+
+processors:
+  # Batch processor - Agrupa telemetria para eficiência
+  batch:
+    send_batch_max_size: 100
+    send_batch_size: 10
+    timeout: 10s
+  
+  # Resource processor - Adiciona metadados
+  resource:
+    attributes:
+      - key: service.name
+        value: "jarvis-v2"
+        action: upsert
+      - key: service.version
+        value: "2.0.0"
+        action: upsert
+      - key: deployment.environment
+        value: "development"
+        action: upsert
+      - key: host.name
+        value: "jarvis-v2-host"
+        action: upsert
+
+service:
+  pipelines:
+    # Pipeline de métricas - Inclui Datadog
+    metrics:
+      receivers: [datadog/connector, otlp, hostmetrics]
+      processors: [batch]
+      exporters: [datadog/exporter]
+    
+    # Pipeline de traces - Inclui Datadog
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [datadog/connector, datadog/exporter]
+    
+    # Pipeline de logs - Inclui Datadog
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [datadog/exporter]
+
+  # Configurações de telemetria do próprio coletor
+  telemetry:
+    logs:
+      level: "info"
+    metrics:
+      address: "localhost:8888"

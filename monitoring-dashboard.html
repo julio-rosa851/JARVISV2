@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS V2 - Dashboard de Monitoramento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .metric-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .metric-item:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: 500;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #4ade80;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online {
+            background-color: #4ade80;
+        }
+        
+        .status-offline {
+            background-color: #ef4444;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(45deg, #4ade80, #22c55e);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .links-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .link-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.2s;
+        }
+        
+        .link-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .last-updated {
+            text-align: center;
+            margin-top: 20px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 JARVIS V2</h1>
+            <p>Dashboard de Monitoramento e Observabilidade</p>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>🚀 Status dos Serviços</h3>
+                <div id="services-status">
+                    <div class="metric-item">
+                        <span class="metric-label">
+                            <span class="status-indicator status-offline"></span>
+                            Backend API
+                        </span>
+                        <span class="metric-value">Carregando...</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">
+                            <span class="status-indicator status-offline"></span>
+                            Firebase
+                        </span>
+                        <span class="metric-value">Carregando...</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">
+                            <span class="status-indicator status-offline"></span>
+                            Telemetria
+                        </span>
+                        <span class="metric-value">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>📊 Observabilidade</h3>
+                <div id="observability-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">OpenTelemetry</span>
+                        <span class="metric-value">Ativo</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Prometheus</span>
+                        <span class="metric-value">Ativo</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Datadog</span>
+                        <span class="metric-value" id="datadog-status">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>🔥 Firebase Stats</h3>
+                <div id="firebase-stats">
+                    <div class="metric-item">
+                        <span class="metric-label">Conversas Totais</span>
+                        <span class="metric-value" id="total-conversations">-</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Usuários Únicos</span>
+                        <span class="metric-value" id="unique-users">-</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Conexão</span>
+                        <span class="metric-value" id="firebase-connection">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="links-section">
+            <h3 style="margin-bottom: 20px; color: #ffd700;">🔗 Links Úteis</h3>
+            <div class="links-grid">
+                <a href="http://localhost:8001" class="link-item" target="_blank">
+                    <div>🌐 Backend API</div>
+                    <small>localhost:8001</small>
+                </a>
+                <a href="http://localhost:3000" class="link-item" target="_blank">
+                    <div>💻 Frontend</div>
+                    <small>localhost:3000</small>
+                </a>
+                <a href="http://localhost:8002/metrics" class="link-item" target="_blank">
+                    <div>📈 Métricas Prometheus</div>
+                    <small>localhost:8002</small>
+                </a>
+                <a href="http://localhost:8888/metrics" class="link-item" target="_blank">
+                    <div>🔍 OTEL Collector</div>
+                    <small>localhost:8888</small>
+                </a>
+                <a href="http://localhost:8889/metrics" class="link-item" target="_blank">
+                    <div>📊 Prometheus Export</div>
+                    <small>localhost:8889</small>
+                </a>
+                <a href="https://app.ddog-gov.com" class="link-item" target="_blank">
+                    <div>🐕 Datadog Dashboard</div>
+                    <small>Gov Cloud</small>
+                </a>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="refresh-btn" onclick="refreshData()">🔄 Atualizar Dados</button>
+        </div>
+        
+        <div class="last-updated">
+            <p>Última atualização: <span id="last-updated">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        async function fetchSystemStatus() {
+            try {
+                const response = await fetch('http://localhost:8001/');
+                const data = await response.json();
+                
+                // Atualizar status dos serviços
+                updateServiceStatus('Backend API', true);
+                updateServiceStatus('Firebase', data.services.firebase);
+                updateServiceStatus('Telemetria', data.services.telemetry);
+                
+                // Atualizar status do Datadog
+                document.getElementById('datadog-status').textContent = 
+                    data.services.datadog ? 'Conectado' : 'Desconectado';
+                document.getElementById('datadog-status').style.color = 
+                    data.services.datadog ? '#4ade80' : '#ef4444';
+                
+                // Atualizar stats do Firebase
+                if (data.stats) {
+                    document.getElementById('total-conversations').textContent = 
+                        data.stats.total_conversations || '0';
+                    document.getElementById('unique-users').textContent = 
+                        data.stats.unique_users || '0';
+                    document.getElementById('firebase-connection').textContent = 
+                        data.stats.firebase_connected ? 'Conectado' : 'Desconectado';
+                }
+                
+            } catch (error) {
+                console.error('Erro ao buscar status:', error);
+                updateServiceStatus('Backend API', false);
+                updateServiceStatus('Firebase', false);
+                updateServiceStatus('Telemetria', false);
+            }
+        }
+        
+        function updateServiceStatus(serviceName, isOnline) {
+            const servicesDiv = document.getElementById('services-status');
+            const items = servicesDiv.querySelectorAll('.metric-item');
+            
+            items.forEach(item => {
+                const label = item.querySelector('.metric-label');
+                if (label.textContent.includes(serviceName)) {
+                    const indicator = label.querySelector('.status-indicator');
+                    const value = item.querySelector('.metric-value');
+                    
+                    if (isOnline) {
+                        indicator.className = 'status-indicator status-online';
+                        value.textContent = 'Online';
+                        value.style.color = '#4ade80';
+                    } else {
+                        indicator.className = 'status-indicator status-offline';
+                        value.textContent = 'Offline';
+                        value.style.color = '#ef4444';
+                    }
+                }
+            });
+        }
+        
+        function refreshData() {
+            fetchSystemStatus();
+            document.getElementById('last-updated').textContent = 
+                new Date().toLocaleString('pt-BR');
+        }
+        
+        // Atualizar dados inicialmente
+        refreshData();
+        
+        // Atualizar a cada 30 segundos
+        setInterval(refreshData, 30000);
+    </script>
+</body>
+</html>

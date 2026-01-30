@@ -1,0 +1,100 @@
+# Datadog Agent Configuration for JARVIS V2
+# Configuração do Datadog Agent
+
+# API Key - Substitua pela sua chave real
+api_key: "401c3160ae0a60569c3070239ee296c4"
+
+# Site do Datadog (gov cloud)
+site: "ddog-gov.com"
+
+# Hostname personalizado
+hostname: "jarvis-v2-host"
+
+# Tags globais
+tags:
+  - "project:jarvis-v2"
+  - "component:ai-assistant"
+  - "team:development"
+  - "env:development"
+  - "version:2.0.0"
+
+# Configurações de logs
+logs_enabled: true
+logs_config:
+  container_collect_all: true
+  processing_rules:
+    - type: include_at_match
+      name: jarvis_logs
+      pattern: "jarvis|JARVIS"
+
+# Configurações de APM (Application Performance Monitoring)
+apm_config:
+  enabled: true
+  env: "development"
+  receiver_port: 8126
+  
+# Configurações de métricas customizadas
+dogstatsd_config:
+  enabled: true
+  port: 8125
+  non_local_traffic: true
+
+# Integrações específicas
+integrations:
+  # Monitoramento de processos Python
+  process:
+    enabled: true
+    config:
+      - name: "jarvis-backend"
+        search_string: ["python", "simple_main.py"]
+        tags:
+          - "service:jarvis-backend"
+          - "component:api"
+      
+      - name: "jarvis-frontend"
+        search_string: ["node", "vite"]
+        tags:
+          - "service:jarvis-frontend"
+          - "component:ui"
+
+  # Monitoramento HTTP
+  http_check:
+    enabled: true
+    instances:
+      - name: "jarvis-backend-health"
+        url: "http://localhost:8001/health"
+        timeout: 5
+        tags:
+          - "service:jarvis-backend"
+          - "check:health"
+      
+      - name: "jarvis-frontend-health"
+        url: "http://localhost:3000"
+        timeout: 5
+        tags:
+          - "service:jarvis-frontend"
+          - "check:health"
+
+  # Monitoramento de OpenTelemetry
+  opentelemetry:
+    enabled: true
+    config:
+      endpoint: "http://localhost:4318"
+      tags:
+        - "service:jarvis-otel"
+
+# Configurações de sistema
+system_probe_config:
+  enabled: true
+  
+# Configurações de rede
+network_config:
+  enabled: true
+
+# Configurações de segurança
+security_agent:
+  enabled: false  # Desabilitado para desenvolvimento
+
+# Configurações de compliance
+compliance_config:
+  enabled: false  # Desabilitado para desenvolvimento
